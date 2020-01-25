@@ -11,29 +11,30 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(readxl)
 library(tidyverse)
+library(tidylog)
 
 if(!file.exists("all_data.Rdata")){
   
-la_data <- read_excel("LA-Type-B-November-2019-fZk64.xls", sheet = 4, skip = 13)
-
-# take out the top row
-
-la_data <- la_data %>% 
-  slice(-1)
-
-trust_data <- read_excel("Trust-Type-B-November-2019-fZk64.xls", sheet = 4, skip = 13)
-
-# take out the top two rows
-
-trust_data <- trust_data %>% 
-  slice(c(-1, -2))
-
-# take out the top row
-
-granular_data <- read_csv("MSitDT-NOVEMBER-2019-full-extract-for-publication-fZk64.csv")
-
-save(la_data, trust_data, granular_data, file = "all_data.Rdata")
-
+  la_data <- read_excel("LA-Type-B-November-2019-fZk64.xls", sheet = 4, skip = 13)
+  
+  # take out the top row
+  
+  la_data <- la_data %>% 
+    slice(-1)
+  
+  trust_data <- read_excel("Trust-Type-B-November-2019-fZk64.xls", sheet = 4, skip = 13)
+  
+  # take out the top two rows
+  
+  trust_data <- trust_data %>% 
+    slice(c(-1, -2))
+  
+  # take out the top row
+  
+  granular_data <- read_csv("MSitDT-NOVEMBER-2019-full-extract-for-publication-fZk64.csv")
+  
+  save(la_data, trust_data, granular_data, file = "all_data.Rdata")
+  
 } else {
   
   load("all_data.Rdata")
@@ -56,7 +57,7 @@ There are several sheets here. I've read sheet 4 for now which gives the reason 
 
 ### Total delayed days by Trust
 
-
+There are again several sheets here. I've read sheet 4 for now which gives the reason for the DTOC.
 
 ## Shiny application
 
@@ -66,3 +67,25 @@ Toolkit is [here](https://improvement.nhs.uk/resources/delayed-transfer-care-dto
 * SPC of DTOCs (all reason)
 * And then SPC by reason
 
+### Elements of Shiny application
+
+#### Pareto graph (granular data)
+
+```{r}
+
+granular_data %>% 
+  filter(`Provider Parent Name` == "NHS ENGLAND EAST OF ENGLAND (EAST)") %>% 
+  group_by(`Reason For Delay`) %>% 
+  summarise(nhs_dtoc = sum(`NHS DTOC beds`)) %>% 
+  arrange(-nhs_dtoc) %>% 
+  mutate(`Reason For Delay` = factor(`Reason For Delay`, levels = `Reason For Delay`)) %>% 
+  mutate(csum = cumsum(nhs_dtoc)) %>% 
+  ggplot(aes(x = `Reason For Delay`)) + 
+  geom_bar(aes(y = nhs_dtoc), stat = "identity") + 
+  geom_point(aes(y = csum)) +
+  geom_path(aes(y = csum, group=1)) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+```
+
+#### SPCs of DTOCs (all reasons)
