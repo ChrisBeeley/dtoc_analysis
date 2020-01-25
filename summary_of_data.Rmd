@@ -1,0 +1,68 @@
+---
+title: "Data summary"
+author: "Chris Beeley"
+date: "25/01/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+library(readxl)
+library(tidyverse)
+
+if(!file.exists("all_data.Rdata")){
+  
+la_data <- read_excel("LA-Type-B-November-2019-fZk64.xls", sheet = 4, skip = 13)
+
+# take out the top row
+
+la_data <- la_data %>% 
+  slice(-1)
+
+trust_data <- read_excel("Trust-Type-B-November-2019-fZk64.xls", sheet = 4, skip = 13)
+
+# take out the top two rows
+
+trust_data <- trust_data %>% 
+  slice(c(-1, -2))
+
+# take out the top row
+
+granular_data <- read_csv("MSitDT-NOVEMBER-2019-full-extract-for-publication-fZk64.csv")
+
+save(la_data, trust_data, granular_data, file = "all_data.Rdata")
+
+} else {
+  
+  load("all_data.Rdata")
+}
+
+```
+
+## Data summary
+
+The data is published [here](https://www.england.nhs.uk/statistics/statistical-work-areas/delayed-transfers-of-care/delayed-transfers-of-care-data-2019-20/). There are three different types of data:
+
+* Time series for England. This does not look very useful since it is very high level
+* Total Delayed Days Local Authority. High level summary of delays by local authority
+* Total Delayed Days Trust. High level summary of delays by health Trust
+* CSV Format Monthly Delayed Transfers of Care. Granular data given by 
+
+### Total delayed days by local authority
+
+There are several sheets here. I've read sheet 4 for now which gives the reason for the DTOC.
+
+### Total delayed days by Trust
+
+
+
+## Shiny application
+
+Toolkit is [here](https://improvement.nhs.uk/resources/delayed-transfer-care-dtoc-improvement-tool/). It contains:
+
+* Pareto graph of reason for discharge
+* SPC of DTOCs (all reason)
+* And then SPC by reason
+
