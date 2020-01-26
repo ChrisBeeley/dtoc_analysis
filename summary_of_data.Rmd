@@ -40,6 +40,8 @@ if(!file.exists("all_data.Rdata")){
   
   granular_data <- read_csv("MSitDT-NOVEMBER-2019-full-extract-for-publication-fZk64.csv")
   
+  granular2 <- read_csv("MSitDT-AUGUST-2019-full-extract-for-publication-KJK5B.csv")
+  
   # put together time series of granular data
   
   time_granular <- bind_rows(
@@ -106,8 +108,8 @@ granular_data %>%
   ggplot(aes(x = `Reason For Delay`)) + 
   geom_bar(aes(y = nhs_dtoc), stat = "identity") + 
   geom_point(aes(y = csum)) +
-  geom_path(aes(y = csum, group=1)) +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+  geom_path(aes(y = csum, group = 1)) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 
 ```
 
@@ -117,17 +119,14 @@ granular_data %>%
 
 # summarise
 
-check_data <- time_granular %>% 
-  filter(`Provider Parent Name` == "NHS ENGLAND EAST OF ENGLAND (EAST)") %>% 
-  
-
+time_granular %>% 
   group_by(Date) %>% 
-  summarise(nhs_dtoc = sum(`NHS DTOC beds`)) %>% 
+  summarise(nhs_dtoc = sum(`NHS DTOC beds`, na.rm = TRUE)) %>% 
   qic(Date, nhs_dtoc, 
     data     = .,
     chart    = 'i',
     title     = 'All DTOCs',
-    ylab     = 'Rate',
+    ylab     = 'Total DTOCs',
     xlab     = 'Month')
 
 ```

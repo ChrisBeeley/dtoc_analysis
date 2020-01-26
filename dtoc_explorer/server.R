@@ -25,8 +25,21 @@ function(input, output) {
             ggplot(aes(x = `Reason For Delay`)) + 
             geom_bar(aes(y = nhs_dtoc), stat = "identity") + 
             geom_point(aes(y = csum)) +
-            geom_path(aes(y = csum, group=1)) +
+            geom_path(aes(y = csum, group = 1)) +
             theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
     })
-
+    
+    output$spcAllCauses <- renderPlot({
+        
+        time_granular %>% 
+            filter(`Provider Parent Name` == input$regionSelect) %>% 
+            group_by(Date) %>% 
+            summarise(nhs_dtoc = sum(`NHS DTOC beds`, na.rm = TRUE)) %>% 
+            qic(Date, nhs_dtoc, 
+                data     = .,
+                chart    = 'i',
+                title     = 'All DTOCs',
+                ylab     = 'Total DTOCs',
+                xlab     = 'Month')
+    })
 }

@@ -12,7 +12,10 @@ fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
-            plotOutput("paretoPlot")
+            tabsetPanel(
+                tabPanel("Causes of DTOC", plotOutput("paretoPlot")),
+                tabPanel("SPC all causes", plotOutput("spcAllCauses"))
+            )
         )
     )
 )
