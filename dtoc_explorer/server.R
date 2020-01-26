@@ -1,22 +1,57 @@
 
+library(readxl)
 library(tidyverse)
+library(tidylog)
+library(qicharts2)
+library(lubridate)
+library(qicharts2)
+library(prophet)
 
-load("../all_data.Rdata")
+load("all_data.Rdata")
 
 function(input, output) {
     
-    # render UI
+    # reactive dataset----
+    
+    filter_data <- reactive({
+        
+        filter_df <- time_granular %>% 
+            filter(`Provider Parent Name` == input$regionSelect)
+        
+        if(input$trustSelect != "All"){
+            
+            filter_df <- filter_df %>% 
+                filter(`Provider Org Name` == input$trustSelect)
+        }
+        
+        return(filter_df)
+    })
+    
+    # render UI----
     
     output$regionInput <- renderUI({
         
         selectInput("regionSelect", "Select region",
-                    choices = unique(granular_data$`Provider Parent Name`))
+                    choices = unique(time_granular$`Provider Parent Name`))
     })
-
+    
+    output$trustInput <- renderUI({
+        
+        choices <- time_granular %>% 
+            filter(`Provider Parent Name` == input$regionSelect) %>%  
+            arrange(`Provider Org Name`) %>% 
+            pull(`Provider Org Name`) %>% 
+            unique()
+        
+        selectInput("trustSelect", "Select Trust",
+                    choices = c("All", choices))
+    })
+    
+    # outputs----
+    
     output$paretoPlot <- renderPlot({
-
-        granular_data %>% 
-            filter(`Provider Parent Name` == input$regionSelect) %>% 
+        
+        filter_data() %>% 
             group_by(`Reason For Delay`) %>% 
             summarise(nhs_dtoc = sum(`NHS DTOC beds`)) %>% 
             arrange(-nhs_dtoc) %>% 
@@ -26,13 +61,12 @@ function(input, output) {
             geom_bar(aes(y = nhs_dtoc), stat = "identity") + 
             geom_point(aes(y = csum)) +
             geom_path(aes(y = csum, group = 1)) +
-            theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+            theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust=1))
     })
     
     output$spcAllCauses <- renderPlot({
         
-        time_granular %>% 
-            filter(`Provider Parent Name` == input$regionSelect) %>% 
+        filter_data() %>% 
             group_by(Date) %>% 
             summarise(nhs_dtoc = sum(`NHS DTOC beds`, na.rm = TRUE)) %>% 
             qic(Date, nhs_dtoc, 
@@ -41,5 +75,21 @@ function(input, output) {
                 title     = 'All DTOCs',
                 ylab     = 'Total DTOCs',
                 xlab     = 'Month')
+    })
+    
+    output$dtocForecast <- renderPlot({
+        
+        m <- time_granular %>% 
+            filter(`Provider Parent Name` == input$regionSelect) %>% 
+            group_by(Date) %>% 
+            summarise(nhs_dtoc = sum(`NHS DTOC beds`, na.rm = TRUE)) %>% 
+            rename("ds" = "Date", "y" = "nhs_dtoc") %>% 
+            prophet()
+        
+        future <- make_future_dataframe(m, periods = 12)
+        
+        forecast <- predict(m, future)
+        
+        plot(m, forecast)
     })
 }

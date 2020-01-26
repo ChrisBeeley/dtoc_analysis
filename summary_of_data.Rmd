@@ -15,6 +15,7 @@ library(tidylog)
 library(qicharts2)
 library(lubridate)
 library(qicharts2)
+library(prophet)
 
 if(!file.exists("all_data.Rdata")){
   
@@ -47,7 +48,9 @@ if(!file.exists("all_data.Rdata")){
   time_granular <- bind_rows(
     map(list.files(pattern = "*.csv", full.names = TRUE), function(x) {
       
-      read_csv(x)
+      data_loop <- read_csv(x)
+      
+      set_names(data_loop, names(granular_data))
     })
   )
   
@@ -99,7 +102,6 @@ Toolkit is [here](https://improvement.nhs.uk/resources/delayed-transfer-care-dto
 ```{r}
 
 granular_data %>% 
-  filter(`Provider Parent Name` == "NHS ENGLAND EAST OF ENGLAND (EAST)") %>% 
   group_by(`Reason For Delay`) %>% 
   summarise(nhs_dtoc = sum(`NHS DTOC beds`)) %>% 
   arrange(-nhs_dtoc) %>% 
@@ -109,15 +111,13 @@ granular_data %>%
   geom_bar(aes(y = nhs_dtoc), stat = "identity") + 
   geom_point(aes(y = csum)) +
   geom_path(aes(y = csum, group = 1)) +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1))
 
 ```
 
 #### SPCs of DTOCs (all reasons)
 
 ```{r}
-
-# summarise
 
 time_granular %>% 
   group_by(Date) %>% 
@@ -131,6 +131,26 @@ time_granular %>%
 
 ```
 
+#### Forecasting
 
+```{r}
+
+m <- time_granular %>% 
+  group_by(Date) %>% 
+  summarise(nhs_dtoc = sum(`NHS DTOC beds`, na.rm = TRUE)) %>% 
+  rename("ds" = "Date", "y" = "nhs_dtoc") %>% 
+  prophet()
+
+future <- make_future_dataframe(m, periods = 12)
+
+forecast <- predict(m, future)
+
+plot(m, forecast)
+
+```
+
+#### SPCs of DTOCs (by reason)
+
+TBC
 
 
