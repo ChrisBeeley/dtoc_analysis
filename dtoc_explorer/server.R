@@ -79,17 +79,13 @@ function(input, output) {
     
     output$dtocForecast <- renderPlot({
         
-        m <- time_granular %>% 
+        time_granular %>% 
             filter(`Provider Parent Name` == input$regionSelect) %>% 
             group_by(Date) %>% 
             summarise(nhs_dtoc = sum(`NHS DTOC beds`, na.rm = TRUE)) %>% 
-            rename("ds" = "Date", "y" = "nhs_dtoc") %>% 
-            prophet()
+            ggplot(aes(x = Date, y = nhs_dtoc)) + geom_line() +
+            geom_smooth()
         
-        future <- make_future_dataframe(m, periods = 12)
         
-        forecast <- predict(m, future)
-        
-        plot(m, forecast)
     })
 }
