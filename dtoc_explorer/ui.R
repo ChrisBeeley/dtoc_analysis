@@ -17,7 +17,7 @@ fluidPage(
             tabsetPanel(
                 tabPanel("Causes of DTOC", plotOutput("paretoPlot")),
                 tabPanel("SPC all causes", plotOutput("spcAllCauses")),
-                tabPanel("Forecast", plotOutput("dtocForecast"))
+                tabPanel("Over time", plotOutput("dtocForecast"))
             )
         )
     )
